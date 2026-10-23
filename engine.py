@@ -2,12 +2,16 @@ import numpy as np
 
 G = 6.6743e-11
 
+# dictionary: {key: value}
+# {string_name: np.array([])}
+# i.e {earth: [x, y, z, vx, vy, vz, m], moon: [x, y, z, vx, vy, vz, m]}
+
 class Engine:
     def __init__(self):
         self.bodies = {}
 
     def add_body(self, name: str, coords: np.ndarray, mass: float, orbit_body: str = None):
-        velocity = np.array([0.0,0.0,0.0])
+        velocity = np.array([0.0, 0.0, 0.0])
 
         
         if orbit_body is not None:
@@ -31,43 +35,61 @@ class Engine:
     def delete_body(self, name: str):
         del self.bodies[name]
 
+    
     def get_force_gravity(self, body1: np.ndarray, body2: np.ndarray):
+        # returns force of attraction in Newtons between two bodies
+
+        # take x,y,z coordinates of both bodies by splicing their 'state' vector
         pos1 = body1[:3]
         pos2 = body2[:3]
+        # do the same for the mass
         mass1 = body1[6:]
         mass2 = body2[6:]
 
-        dist_vector = pos1 - pos2 # vector between two bodies
-        dist_mag = np.linalg.norm(dist_vector) # magnitude of vector bet. the bodies
+        # get vector ([x,y,z]) between the two celestial bodies
+        dist_vector = pos1 - pos2
 
-        unit_vector = dist_vector / dist_mag    # direction vector for force
+        # get norm (magnitude) of distance vector, (numpy has a built in function so we don't have to do math)
+        dist_norm = np.linalg.norm(dist_vector) 
 
-        force_gravity = (G * (mass1 * mass2) / (dist_mag**2)) * unit_vector # vector for force due to gravity
+        # get unit vector (vector in same direction as distance_vector but with magnitude of 1)
+        dist_unit_vector = dist_vector / dist_norm 
+
+        # compute force_gravity_vector ([fx, fy, fz]) with physics formula
+        # we multiply it by the dist_unit_vector to turn it from a magnitude into a vector
+        force_gravity = (G * (mass1 * mass2) / (dist_norm**2)) * dist_unit_vector
         return force_gravity
 
     def apply_forces(self, dt):
-        for name1, state1 in self.bodies:
+        # for every celestial body in the engine, we will compute its force_gravity with every other body in the engine
+        # then convert the force into their acceleration
 
+        # name1 = string, state1 = np.array of that bodies stats
+        for name1, state1 in self.bodies.items():
+            # get mass of body we are checking and set f_net = 0
             mass = state1[6:]
             force_net = 0.0
 
-            for name2, state2 in self.bodies:
-
+            for name2, state2 in self.bodies.items():
+                # skip if it's the same body
                 if name1 == name2:
                     continue
-                
+
+                # get force_gravity using class method, then add to force_net
+                # force_net is a vector ([fx, fy, fz])
                 force_net += self.get_force_gravity(state1, state2)
 
+            # compute acceleration with physics formula and add it to our bodies velocity stats
             acceleration_vector =  force_net / mass
             state1[3:6] += acceleration_vector * dt
 
     def update_positions(self, dt):
-        for name, state in self.bodies:
+        # once forces are applied, this method will update each bodies x,y,z coordinates by adding their new velocity vectors
+        for state in self.bodies.values():
             state[:3] += state[3:6] * dt
 
     def step(self, dt):
-        self.apply_forces(dt)
-        self.update_positions(dt)
-        for name, state in self.bodies:
-            print(f'{name}, state: {state}', end = "\r", flush = True)
+        # this method will run every 'tick'
 
+        self.apply_forces(dt) # first compute force -> acceleration -> velocity
+        self.update_positions(dt) # then update position by adding velocity for that tick
