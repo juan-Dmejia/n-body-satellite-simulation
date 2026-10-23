@@ -15,6 +15,8 @@ class Engine:
 
         
         if orbit_body is not None:
+            # sets a velocity vector perpendicular to central body to 'kickstart' the orbit
+
             orbit_state = self.bodies[orbit_body]
 
             central_mass = orbit_state[6:]

@@ -12,7 +12,7 @@ DIST = 384400
 
 
 eng = Engine()
-dt = 60.0
+dt = 1.0
 
 eng.add_body('earth', np.array([0.0,0.0,0.0]), M_EARTH)
 eng.add_body('moon', np.array([DIST, 0.0, 0.0]), M_MOON, 'earth')
@@ -23,8 +23,11 @@ try:
 
         # live terminal update
         moon_pos = eng.bodies['moon'][:3]
+        # Calculate current distance from the origin (Earth)
+        current_distance = np.linalg.norm(moon_pos)
+
         print(
-            f"Moon Coords -> X: {moon_pos[0]:,.1f}m | Y: {moon_pos[1]:,.1f}m | Z: {moon_pos[2]:,.1f}m",
+            f"Moon Coords -> X: {moon_pos[0]:,.1f}m | Y: {moon_pos[1]:,.1f}m | Z: {moon_pos[2]:,.1f}m | current distance: {current_distance:,.1f}m",
             end="\r",
             flush = True,
         )
