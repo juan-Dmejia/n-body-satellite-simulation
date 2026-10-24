@@ -98,3 +98,17 @@ class Engine:
 
         self.apply_forces(dt) # first compute force -> acceleration -> velocity
         self.update_positions(dt) # then update position by adding velocity for that tick
+
+    def burn_fuel(self, name: str, fuel_amount: float, thrust_direction: np.ndarray, dt: float):
+        # Get the body's state array
+        state = self.bodies[name]
+        
+        # 1. Reduce the total mass (index 6) by how much fuel was burned
+        state[6] -= fuel_amount
+        
+        # 2. Calculate acceleration from thrust (Force / Mass)
+        thrust_force = thrust_direction * 100000.0  # arbitrary engine power scaling
+        acceleration_vector = thrust_force / state[6]
+        
+        # 3. Add that acceleration to the rocket's velocity (indices 3, 4, 5)
+        state[3:6] += acceleration_vector * dt
