@@ -19,7 +19,7 @@ class Engine:
 
             orbit_state = self.bodies[orbit_body]
 
-            central_mass = orbit_state[6:]
+            central_mass = orbit_state[6]
 
             dist_vector = coords - orbit_state[:3]
             dist_magnitude = np.linalg.norm(dist_vector)
@@ -37,7 +37,6 @@ class Engine:
     def delete_body(self, name: str):
         del self.bodies[name]
 
-    
     def get_force_gravity(self, body1: np.ndarray, body2: np.ndarray):
         # returns force of attraction in Newtons between two bodies
 
@@ -45,11 +44,11 @@ class Engine:
         pos1 = body1[:3]
         pos2 = body2[:3]
         # do the same for the mass
-        mass1 = body1[6:]
-        mass2 = body2[6:]
+        mass1 = body1[6]
+        mass2 = body2[6]
 
         # get vector ([x,y,z]) between the two celestial bodies
-        dist_vector = pos1 - pos2
+        dist_vector = pos2 - pos1
 
         # get norm (magnitude) of distance vector, (numpy has a built in function so we don't have to do math)
         dist_norm = np.linalg.norm(dist_vector) 
@@ -69,7 +68,7 @@ class Engine:
         # name1 = string, state1 = np.array of that bodies stats
         for name1, state1 in self.bodies.items():
             # get mass of body we are checking and set f_net = 0
-            mass = state1[6:]
+            mass = state1[6]
             force_net = 0.0
 
             for name2, state2 in self.bodies.items():
@@ -82,12 +81,16 @@ class Engine:
                 force_net += self.get_force_gravity(state1, state2)
 
             # compute acceleration with physics formula and add it to our bodies velocity stats
-            acceleration_vector =  force_net / mass
+            acceleration_vector = force_net / mass
             state1[3:6] += acceleration_vector * dt
 
     def update_positions(self, dt):
         # once forces are applied, this method will update each bodies x,y,z coordinates by adding their new velocity vectors
-        for state in self.bodies.values():
+        for name, state in self.bodies.items():
+            # OPTIONAL (off for now): skip updating earth's position for now so it acts as an anchor
+            #if name == 'earth':
+            #    continue
+            
             state[:3] += state[3:6] * dt
 
     def step(self, dt):

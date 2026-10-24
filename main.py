@@ -8,28 +8,32 @@ import numpy as np
 M_EARTH = 5.97219e24
 M_MOON = 7.34767e22
 
-DIST = 384400
+DIST = 384400000
 
 
-eng = Engine()
-dt = 1.0
+engine = Engine()
+dt = 60.0
 
-eng.add_body('earth', np.array([0.0,0.0,0.0]), M_EARTH)
-eng.add_body('moon', np.array([DIST, 0.0, 0.0]), M_MOON, 'earth')
+engine.add_body('earth', np.array([0.0,0.0,0.0]), M_EARTH)
+engine.add_body('moon', np.array([DIST, 0.0, 0.0]), M_MOON)
 
 try:
     while True:
-        eng.step(dt)
+        engine.step(dt)
 
         # live terminal update
-        moon_pos = eng.bodies['moon'][:3]
-        # Calculate current distance from the origin (Earth)
-        current_distance = np.linalg.norm(moon_pos)
+        moon_pos = engine.bodies['moon'][:3]
+        earth_pos = engine.bodies['earth'][:3]
+        dist = moon_pos - earth_pos
+        # Calculate current distance from earth
+        current_distance = np.linalg.norm(dist)
 
         print(
-            f"Moon Coords -> X: {moon_pos[0]:,.1f}m | Y: {moon_pos[1]:,.1f}m | Z: {moon_pos[2]:,.1f}m | current distance: {current_distance:,.1f}m",
+            f"Moon: ({moon_pos[0]:,.0f}, {moon_pos[1]:,.0f}, {moon_pos[2]:,.0f}) | "
+            f"Earth: ({earth_pos[0]:,.0f}, {earth_pos[1]:,.0f}, {earth_pos[2]:,.0f}) | "
+            f"Dist: {current_distance:,.0f}m",
             end="\r",
-            flush = True,
+            flush=True,
         )
 
         # throttle to limit cpu speed
