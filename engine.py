@@ -9,6 +9,7 @@ G = 6.6743e-11
 class Engine:
     def __init__(self):
         self.bodies = {}
+        self.controller = None
 
     def add_body(self, name: str, coords: np.ndarray, mass: float, orbit_body: str = None):
         velocity = np.array([0.0, 0.0, 0.0])
@@ -61,7 +62,7 @@ class Engine:
         force_gravity = (G * (mass1 * mass2) / (dist_norm**2)) * dist_unit_vector
         return force_gravity
 
-    def apply_forces(self, dt):
+    def apply_force_gravity(self, dt):
         # for every celestial body in the engine, we will compute its force_gravity with every other body in the engine
         # then convert the force into their acceleration
 
@@ -93,22 +94,21 @@ class Engine:
             
             state[:3] += state[3:6] * dt
 
+    def apply_throttle(self, throttle_vector: np.ndarray, dt):
+
+        rocket_mass = self.bodies['rocket'][6]
+        acceleration_vector = throttle_vector / rocket_mass
+
+        self.bodies['rocket'][3:6] += acceleration_vector * dt
+
+
     def step(self, dt):
         # this method will run every 'tick'
 
-        self.apply_forces(dt) # first compute force -> acceleration -> velocity
-        self.update_positions(dt) # then update position by adding velocity for that tick
+        self.apply_force_gravity(dt) # first compute force -> acceleration -> velocity
 
-    def burn_fuel(self, name: str, fuel_amount: float, thrust_direction: np.ndarray, dt: float):
-        # Get the body's state array
-        state = self.bodies[name]
+        # apply throttle if rocket exists
+        if self.bodies['rocket'] is not None:
+            self.apply_throttle(self.controller.get_propulsion_force(), dt)
         
-        # 1. Reduce the total mass (index 6) by how much fuel was burned
-        state[6] -= fuel_amount
-        
-        # 2. Calculate acceleration from thrust (Force / Mass)
-        thrust_force = thrust_direction * 100000.0  # arbitrary engine power scaling
-        acceleration_vector = thrust_force / state[6]
-        
-        # 3. Add that acceleration to the rocket's velocity (indices 3, 4, 5)
-        state[3:6] += acceleration_vector * dt
+        self.update_positions(dt) # then update position by adding velocity for that tick
