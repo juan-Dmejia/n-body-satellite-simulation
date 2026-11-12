@@ -1,0 +1,4 @@
+numpy
+ursina
+gymnasium
+stable-baselines3
